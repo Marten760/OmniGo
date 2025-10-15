@@ -2,7 +2,8 @@
   "node": {
     "externalPackages": [
       "@convex-dev/auth",
-      "pi-backend"
+      "pi-backend",
+      "@stellar/stellar-sdk"
     ]
   },
   "projectConfig": {

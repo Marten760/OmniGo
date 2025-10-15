@@ -70,7 +70,7 @@ export const approvePiPayment = action({
     const user = await ctx.runQuery(internal.users.getUser, { tokenIdentifier });
     if (!user) throw new Error("User must be authenticated to approve a payment.");
 
-    const useSandbox = process.env.PI_SANDBOX === 'true';
+    const useSandbox = process.env.PI_SANDBOX === 'false';
     const baseUrl = useSandbox ? "https://api.sandbox.minepi.com" : "https://api.minepi.com";
     const piApiUrl = `${baseUrl}/v2/me`;
     
@@ -161,7 +161,7 @@ export const completePiPayment = action({
       };
     }
 
-    const useSandbox = process.env.PI_SANDBOX === 'true';
+    const useSandbox = process.env.PI_SANDBOX === 'false';
     const baseUrl = useSandbox ? PI_SANDBOX_API_BASE_URL : PI_API_BASE_URL;
 
     const piApiKey = process.env.PI_API_KEY;
@@ -348,7 +348,7 @@ export const payoutToStore = internalAction({
     }
 
     // --- Direct API call using fetch to bypass SDK bundling issues ---
-    const useSandbox = process.env.PI_SANDBOX === 'true';
+    const useSandbox = process.env.PI_SANDBOX === 'false';
     const baseUrl = useSandbox ? PI_SANDBOX_API_BASE_URL : PI_API_BASE_URL;
 
     // Step 0: Check for and handle any ongoing A2U payments for this UID.
@@ -459,7 +459,7 @@ export const payoutToStore = internalAction({
       }
 
       // Step 2: Build, Sign, and Submit Transaction using Stellar SDK
-      const StellarSdk = require('@stellar/stellar-sdk'); // CORRECTED: Use the scoped package
+      const StellarSdk = require('stellar-sdk');
 
       if (!walletPrivateSeed?.startsWith('S')) {
         throw new Error('Invalid PI_WALLET_PRIVATE_SEED (must start with S).');
@@ -473,11 +473,21 @@ export const payoutToStore = internalAction({
       const piNetwork = new StellarSdk.Server(networkUrl);
       const networkPassphrase = useSandbox ? 'Pi Testnet' : 'Pi Network';
 
-      // Load account and base fee
-      const [myAccount, baseFee] = await Promise.all([
-        piNetwork.loadAccount(myPublicKey),
-        piNetwork.fetchBaseFee(),
-      ]);
+      let myAccount;
+      let baseFee;
+      try {
+        [myAccount, baseFee] = await Promise.all([
+          piNetwork.loadAccount(myPublicKey),
+          piNetwork.fetchBaseFee(),
+        ]);
+        console.log(`[payoutToStore] Account loaded successfully for ${myPublicKey.slice(0, 8)}... Balance: ${myAccount.balances[0]?.balance || 0}`);
+      } catch (error: any) {
+        console.error(`[payoutToStore] Account load failed:`, error.message);
+        if (error.response?.status === 404) {
+          throw new Error(`Wallet not funded: ${myPublicKey}. Fund via Pi Testnet Faucet: https://minepi.com/developer/testnet/faucet`);
+        }
+        throw new Error(`Stellar error: ${error.message}`);
+      }
 
       // Build transaction
       const paymentOp = StellarSdk.Operation.payment({
@@ -505,10 +515,17 @@ export const payoutToStore = internalAction({
       const txid = submitTxResponse.id;
       console.log(`[payoutToStore] Submitted tx ${txid} for payment ${paymentId}.`);
 
+      if (!submitTxResponse.successful) {
+       throw new Error(`Transaction failed: ${JSON.stringify(submitTxResponse)}`);
+      }
+
       // Step 3: Complete the payment
       const completeResponse = await fetch(`${baseUrl}/v2/payments/${paymentId}/complete`, {
         method: 'POST',
-        headers: { 'Authorization': `Key ${apiKey}`, 'Content-Type': 'application/json' },
+        headers: { 
+          'Authorization': `Key ${apiKey}`, 
+          'Content-Type': 'application/json' 
+        },
         body: JSON.stringify({ txid }),
       });
 
@@ -517,13 +534,13 @@ export const payoutToStore = internalAction({
         throw new Error(`Failed to complete payout: ${errorText}`);
       }
 
-      console.log(`[payoutToStore] Payout successful for order ${args.orderId}. TXID: ${txid}`);
+      console.log(`[payoutToStore] Completed payment ${paymentId} with txid ${txid}.`);
 
       await ctx.runMutation(internal.paymentsQueries.recordPayout, {
         storeId: args.storeId,
         orderId: args.orderId,
         amount: args.amount,
-        txid,
+        txid: txid,
         status: "completed"
       });
       return { success: true, txid };
@@ -551,7 +568,7 @@ export const handleIncompletePaymentAction = action({
     paymentId: v.string(),
   },
   handler: async (ctx, { paymentId }): Promise<{ success: boolean; action?: string; txid?: string; reason?: string; mock?: boolean; }> => {
-    const useSandbox = process.env.PI_SANDBOX === 'true';
+    const useSandbox = process.env.PI_SANDBOX === 'false';
     const baseUrl = useSandbox ? PI_SANDBOX_API_BASE_URL : PI_API_BASE_URL;
     const piApiKey = process.env.PI_API_KEY;
     if (!piApiKey) {

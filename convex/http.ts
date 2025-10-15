@@ -53,7 +53,7 @@ http.route({
       
       // NEW: Fetch payment details from Pi API to pass to the processing function.
       // This ensures the order is created even if the client-side callback fails.
-      const useSandbox = process.env.PI_SANDBOX === 'true';
+      const useSandbox = process.env.PI_SANDBOX === 'false';
       const baseUrl = useSandbox ? "https://api.sandbox.minepi.com" : "https://api.minepi.com";
       const piApiKey = process.env.PI_API_KEY;
 
