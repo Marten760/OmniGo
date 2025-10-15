@@ -137,6 +137,7 @@ export const usePi = () => {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
   const authenticate = useCallback(async (scopes: string[] = []): Promise<PiUser> => {
     if (!isInitialized) {
       console.error('[Pi Auth] SDK not initialized, cannot authenticate');
@@ -192,16 +193,16 @@ export const usePi = () => {
       return null;
     }
     try {
-      console.log('[Pi Auth] Re-authenticating for payment with scopes: username, payments, wallet_address');  // Log إضافي
+      console.log('[Pi Auth] Re-authenticating for payment...'); // Log
       // This will likely not show a popup if the user is already authenticated.
       // It will just get a fresh, short-lived access token.
       // Note: wallet_address not needed here, but included for consistency.
       const authResult = await window.Pi.authenticate(['username', 'payments', 'wallet_address'], onIncompletePaymentFound); // Also pass here
       // Update user walletAddress if changed (rare, but possible).
       if (authResult.user.walletAddress && authResult.user.walletAddress !== user.walletAddress) {
-        console.log('[Pi Auth] Updated walletAddress during re-auth:', authResult.user.walletAddress.slice(0, 8) + '...');
-        setUser({ ...user, walletAddress: authResult.user.walletAddress });
-        localStorage.setItem('piUser', JSON.stringify({ ...user, walletAddress: authResult.user.walletAddress }));
+        const updatedUser = { ...user, walletAddress: authResult.user.walletAddress };
+        setUser(updatedUser);
+        localStorage.setItem('piUser', JSON.stringify(updatedUser));
       }
       console.log('[Pi Auth] Re-auth success, token length:', authResult.accessToken ? authResult.accessToken.length : 'null');
       return authResult.accessToken;
