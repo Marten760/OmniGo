@@ -70,7 +70,7 @@ export const approvePiPayment = action({
     const user = await ctx.runQuery(internal.users.getUser, { tokenIdentifier });
     if (!user) throw new Error("User must be authenticated to approve a payment.");
 
-    const useSandbox = process.env.PI_SANDBOX === 'false';
+    const useSandbox = process.env.PI_SANDBOX === 'true';
     const baseUrl = useSandbox ? "https://api.sandbox.minepi.com" : "https://api.minepi.com";
     const piApiUrl = `${baseUrl}/v2/me`;
     
@@ -161,7 +161,7 @@ export const completePiPayment = action({
       };
     }
 
-    const useSandbox = process.env.PI_SANDBOX === 'false';
+    const useSandbox = process.env.PI_SANDBOX === 'true';
     const baseUrl = useSandbox ? PI_SANDBOX_API_BASE_URL : PI_API_BASE_URL;
 
     const piApiKey = process.env.PI_API_KEY;
@@ -348,7 +348,7 @@ export const payoutToStore = internalAction({
     }
 
     // --- Direct API call using fetch to bypass SDK bundling issues ---
-    const useSandbox = process.env.PI_SANDBOX === 'false';
+    const useSandbox = process.env.PI_SANDBOX === 'true';
     const baseUrl = useSandbox ? PI_SANDBOX_API_BASE_URL : PI_API_BASE_URL;
 
     // Step 0: Check for and handle any ongoing A2U payments for this UID.
@@ -402,12 +402,10 @@ export const payoutToStore = internalAction({
       while (retryCount < maxRetries) {
         try {
           const bodyToSend = {
-            payment: {
-              amount: paymentData.amount,
-              memo: paymentData.memo,
-              metadata: paymentData.metadata,
-              uid: uid, // The UID from the store owner
-            },
+            amount: paymentData.amount,
+            memo: paymentData.memo,
+            metadata: paymentData.metadata,
+            uid: uid, // The UID from the store owner
           };
 
           console.log(`[payoutToStore] Sending create body (attempt ${retryCount + 1}):`, JSON.stringify(bodyToSend));
@@ -420,7 +418,13 @@ export const payoutToStore = internalAction({
 
           if (!createResponse.ok) {
             const errorText = await createResponse.text();
-            const errorObj = JSON.parse(errorText); // Parse the error response
+            console.error(`[payoutToStore] Full error response: ${errorText}`); // Log the full error
+            let errorObj;
+            try {
+              errorObj = JSON.parse(errorText); // Parse the error response
+            } catch (e) {
+              throw new Error(`Failed to create payout (unparsable error): ${errorText}`);
+            }
 
             // Check for ongoing_payment_found
             if (errorObj.error === 'ongoing_payment_found' && errorObj.payment && errorObj.payment.identifier) {
@@ -568,7 +572,7 @@ export const handleIncompletePaymentAction = action({
     paymentId: v.string(),
   },
   handler: async (ctx, { paymentId }): Promise<{ success: boolean; action?: string; txid?: string; reason?: string; mock?: boolean; }> => {
-    const useSandbox = process.env.PI_SANDBOX === 'false';
+    const useSandbox = process.env.PI_SANDBOX === 'true';
     const baseUrl = useSandbox ? PI_SANDBOX_API_BASE_URL : PI_API_BASE_URL;
     const piApiKey = process.env.PI_API_KEY;
     if (!piApiKey) {
