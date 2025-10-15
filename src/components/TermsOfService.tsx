@@ -77,12 +77,11 @@ export const TermsOfService = ({ onBack }: { onBack?: () => void }) => {
           <p>To use the full features of our Service, you must create an account. We offer two types of access:</p>
           <ul>
             <li><strong>Pi Account Login:</strong> By logging in with your Pi Network account, you can make payments using Pi coins. You are responsible for maintaining the security of your Pi account.</li>
-            <li><strong>Guest Mode:</strong> You can browse stores and products as a guest. However, you will not be able to place orders or make payments.</li>
           </ul>
           <p>You are responsible for all activities that occur under your account. You are responsible for:</p>
           <ul>
             <li>The accuracy and timeliness of the information you provide.</li>
-            <li>Maintaining the confidentiality of your account information and any passwords.</li>
+            <li>Maintaining the confidentiality of your account information.</li>
             <li>Notifying us immediately of any unauthorized use of your account.</li>
             <li>You are fully responsible for any activity that occurs under your account.</li>
           </ul>
@@ -129,7 +128,7 @@ export const TermsOfService = ({ onBack }: { onBack?: () => void }) => {
           <p>You may terminate your use of the Service at any time by deactivating your account. We may suspend or terminate your access to the Service immediately, without prior notice or liability, if we determine, in our sole discretion, that you have violated these Terms. Upon termination, your right to use the Service will immediately cease.</p>
 
           <h2 id="disclaimers">8. Disclaimers</h2>
-          <p>THE SERVICE IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS. UNEXPRESS MAKES NO WARRANTIES, EXPRESS OR IMPLIED, REGARDING THE OPERATION OF THE SERVICE OR THE INFORMATION, CONTENT, OR MATERIALS INCLUDED THEREIN. WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, SECURE, OR ERROR-FREE. ANY CONTENT OR DATA OBTAINED THROUGH THE USE OF THE SERVICE IS DONE AT YOUR OWN RISK AND YOU WILL BE SOLELY RESPONSIBLE FOR ANY DAMAGE TO YOUR PROPERTY OR LOSS OF DATA.</p>
+          <p>THE SERVICE IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS. OmniGo MAKES NO WARRANTIES, EXPRESS OR IMPLIED, REGARDING THE OPERATION OF THE SERVICE OR THE INFORMATION, CONTENT, OR MATERIALS INCLUDED THEREIN. WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, SECURE, OR ERROR-FREE. ANY CONTENT OR DATA OBTAINED THROUGH THE USE OF THE SERVICE IS DONE AT YOUR OWN RISK AND YOU WILL BE SOLELY RESPONSIBLE FOR ANY DAMAGE TO YOUR PROPERTY OR LOSS OF DATA.</p>
 
           <h2 id="limitation">9. Limitation of Liability</h2>
           <p>TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL OmniGo, NOR ITS DIRECTORS, EMPLOYEES, OR AGENTS, BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING WITHOUT LIMITATION, LOSS OF PROFITS, DATA, OR OTHER INTANGIBLE LOSSES, RESULTING FROM (I) YOUR ACCESS TO OR USE OF OR INABILITY TO ACCESS OR USE THE SERVICE; (II) ANY CONDUCT OR CONTENT OF ANY THIRD PARTY ON THE SERVICE, INCLUDING STORES; (III) ANY BUGS, VIRUSES, OR ERRORS IN THE UNDERLYING SOFTWARE (INCLUDING THE PI SDK). OUR TOTAL LIABILITY TO YOU FOR ANY CLAIM SHALL NOT EXCEED THE AMOUNT OF SERVICE FEES YOU PAID TO US, IF ANY, DURING THE TWELVE (12) MONTHS PRECEDING THE CLAIM.</p>
