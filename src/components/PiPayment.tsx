@@ -27,7 +27,7 @@ export function PiPayment({
   disabled = false,
   children,
 }: PiPaymentProps) {
-  const { isInitialized, user: piUser, createPayment, authenticate, isLoading: piLoading } = usePi(); // Add authenticate and isLoading
+  const { isInitialized, user: piUser, createPayment, authenticate, isLoading: piLoading } = usePi(); // أضف authenticate و isLoading
   const { sessionToken, user: authUser } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [activePaymentId, setActivePaymentId] = useState<string | null>(null);
@@ -68,17 +68,17 @@ export function PiPayment({
     if (!isInitialized && piUser) {  // If user exists but init failed
       console.error('[PiPayment] Pi SDK not initialized, but user exists. Check Pi Browser/Mainnet setup.');
       toast.warning('Pi SDK issue detected. Reloading...');
-      // Optional: reload the page if necessary
+      // اختياري: إعادة تحميل الصفحة إذا لزم
     }
     if (!piUser) {
-      console.log('[PiPayment] No Pi user on load.'); // Log for diagnostics
+      console.log('[PiPayment] No Pi user on load.'); // Log للتشخيص
     }
     if (!authUser) {
-      console.log('[PiPayment] No authUser on load.'); // Log for diagnostics
+      console.log('[PiPayment] No authUser on load.'); // Log للتشخيص
     }
   }, [isInitialized, piUser, authUser]);
 
-  // Helper function to auto-re-auth Pi if authUser exists but piUser does not
+  // دالة مساعدة للـ re-auth تلقائي لـ Pi إذا كان authUser موجود لكن piUser لا
   const ensurePiAuthenticated = async () => {
     if (!authUser) {
       throw new Error('Please sign in first.');
@@ -87,7 +87,7 @@ export function PiPayment({
       console.log('[PiPayment] Auto-authenticating Pi user...');
       toast.info('Connecting Pi Wallet...');
       try {
-        await authenticate(['username', 'payments']); // Basic scopes for payment
+        await authenticate(['username', 'payments']); // scopes أساسية للدفع
         console.log('[PiPayment] Pi auto-auth success.');
       } catch (error) {
         console.error('[PiPayment] Pi auto-auth failed:', error);
@@ -97,26 +97,27 @@ export function PiPayment({
   };
 
   const handlePayment = async () => { 
+    
     try {
-      // First check: if no authUser, it's a general sign-in error
+      // التحقق الأول: إذا لم يكن authUser، خطأ عام
       if (!authUser) {
         toast.error('Please sign in first.');
         return;
       }
       
-      // If no piUser, attempt auto-auth
+      // إذا لم يكن piUser، حاول auto-auth
       await ensurePiAuthenticated();
       
-      // Now, piUser should exist
+      // الآن، يجب أن يكون piUser موجود
       if (!piUser) {
         throw new Error('Pi Wallet connection failed. Please try again.');
       }
       
-      // ... rest of the code remains the same ...
+      // باقي الكود كما هو...
       setIsProcessing(true);
       setPaymentTimedOut(false);
       setIsConfirming(false);
-
+      
       await createPayment(
         {
           amount,
@@ -184,19 +185,20 @@ export function PiPayment({
         sessionToken // Pass the session token explicitly
       );
     } catch (error) {
-      console.error("Error initiating payment:", error);      toast.error((error as Error).message || "Could not start payment process.");
+      console.error("Error initiating payment:", error);
+      toast.error((error as Error).message || "Could not start payment process.");
       setIsProcessing(false);
     }
   };
 
-  // Update disabled state: add piLoading, and be less strict (don't block if piUser is null but authUser exists, as we handle it in handlePayment)
+  // Be less strict: allow payment if user exists, even if SDK is not yet initialized.
   const isButtonDisabled = disabled || isProcessing || (!isInitialized && !piUser && !authUser) || piLoading;
 
   return (
     <div className="space-y-2">
       <button
         onClick={handlePayment}
-        disabled={isButtonDisabled || paymentTimedOut}
+        disabled={isButtonDisabled || paymentTimedOut} // Disable button after timeout
         className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isProcessing 

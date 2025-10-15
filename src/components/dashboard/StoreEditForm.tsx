@@ -110,16 +110,7 @@ export function StoreEditForm({ store }: StoreEditFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // --- Validation Start ---
-    if (formState.email && !/\S+@\S+\.\S+/.test(formState.email)) {
-      toast.error("Please enter a valid email address.");
-      return;
-    }
-    if (formState.phone && !/^\+?[\d\s-()]{7,20}$/.test(formState.phone)) {
-      toast.error("Please enter a valid phone number.");
-      return;
-    }
-    // --- Validation End ---
+    
 
     setIsSubmitting(true);
     try {
