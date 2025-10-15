@@ -75,6 +75,11 @@ export function PiPayment({
   }, [isInitialized, piUser]);
 
   const handlePayment = async () => { 
+    // Add a robust check for both Pi user and authenticated app user.
+    if (!piUser || !authUser) {
+      toast.error('Please sign in and connect your Pi Wallet first.');
+      return;
+    }
     
     setIsProcessing(true);
     setPaymentTimedOut(false);
