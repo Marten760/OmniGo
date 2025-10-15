@@ -1,0 +1,20 @@
+{
+  "node": {
+    "externalPackages": [
+      "@convex-dev/auth",
+      "pi-backend"
+    ]
+  },
+  "projectConfig": {
+    "production": {
+      "environmentVariables": {
+        "PI_SANDBOX": "false"
+      }
+    },
+    "development": {
+      "environmentVariables": {
+        "PI_SANDBOX": "false"
+      }
+    }
+  }
+}
