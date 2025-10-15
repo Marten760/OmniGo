@@ -125,6 +125,18 @@ export const usePi = () => {
     });
   }, [loadPiSdk]);
 
+  // Add this useEffect to detect changes in localStorage (for reloads)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'piUser') {
+        const newUser = e.newValue ? JSON.parse(e.newValue) : null;
+        console.log('[usePi] localStorage piUser changed (reload?):', newUser ? newUser.uid : 'null');
+        setUser(newUser);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
   const authenticate = useCallback(async (scopes: string[] = []): Promise<PiUser> => {
     if (!isInitialized) {
       console.error('[Pi Auth] SDK not initialized, cannot authenticate');
@@ -191,6 +203,7 @@ export const usePi = () => {
         setUser({ ...user, walletAddress: authResult.user.walletAddress });
         localStorage.setItem('piUser', JSON.stringify({ ...user, walletAddress: authResult.user.walletAddress }));
       }
+      console.log('[Pi Auth] Re-auth success, token length:', authResult.accessToken ? authResult.accessToken.length : 'null');
       return authResult.accessToken;
     } catch (error) {
       console.error("Re-authentication for payment failed:", error);
