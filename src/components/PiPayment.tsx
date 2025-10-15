@@ -75,21 +75,13 @@ export function PiPayment({
   }, [isInitialized, piUser]);
 
   const handlePayment = async () => { 
-    if (!piUser || !authUser) {
-      toast.error('Please connect your Pi Wallet first');
-      return;
-    }
-    if (!authUser.profile?.walletAddress) {
-      toast.warning('Wallet address pending. Payment may proceed, but payouts require setup.');
-      // Do not block; payment works without the user's wallet address
-    }
-
+    
     setIsProcessing(true);
     setPaymentTimedOut(false);
     setIsConfirming(false);
     
     try {
-      console.log('[PiPayment] Creating payment with amount:', amount, 'user wallet:', authUser.profile?.walletAddress ? 'set' : 'null');
+
       await createPayment(
         {
           amount,
