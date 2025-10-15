@@ -27,7 +27,7 @@ export function PiPayment({
   disabled = false,
   children,
 }: PiPaymentProps) {
-  const { isInitialized, user: piUser, createPayment, authenticate } = usePi(); 
+  const { isInitialized, user: piUser, createPayment, authenticate, isLoading: piLoading } = usePi(); // Add authenticate and isLoading
   const { sessionToken, user: authUser } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [activePaymentId, setActivePaymentId] = useState<string | null>(null);
@@ -67,25 +67,55 @@ export function PiPayment({
   useEffect(() => { 
     if (!isInitialized && piUser) {  // If user exists but init failed
       console.error('[PiPayment] Pi SDK not initialized, but user exists. Check Pi Browser/Mainnet setup.');
-      toast.warning;
+      toast.warning('Pi SDK issue detected. Reloading...');
+      // Optional: reload the page if necessary
     }
     if (!piUser) {
-      console.error('[PiPayment] No Pi user. Re-auth required.');
+      console.log('[PiPayment] No Pi user on load.'); // Log for diagnostics
     }
-  }, [isInitialized, piUser]);
+    if (!authUser) {
+      console.log('[PiPayment] No authUser on load.'); // Log for diagnostics
+    }
+  }, [isInitialized, piUser, authUser]);
+
+  // Helper function to auto-re-auth Pi if authUser exists but piUser does not
+  const ensurePiAuthenticated = async () => {
+    if (!authUser) {
+      throw new Error('Please sign in first.');
+    }
+    if (!piUser && isInitialized && !piLoading) {
+      console.log('[PiPayment] Auto-authenticating Pi user...');
+      toast.info('Connecting Pi Wallet...');
+      try {
+        await authenticate(['username', 'payments']); // Basic scopes for payment
+        console.log('[PiPayment] Pi auto-auth success.');
+      } catch (error) {
+        console.error('[PiPayment] Pi auto-auth failed:', error);
+        throw error;
+      }
+    }
+  };
 
   const handlePayment = async () => { 
-    // Add a robust check for both Pi user and authenticated app user.
-    if (!piUser || !authUser) {
-      toast.error('Please sign in and connect your Pi Wallet first.');
-      return;
-    }
-    
-    setIsProcessing(true);
-    setPaymentTimedOut(false);
-    setIsConfirming(false);
-    
     try {
+      // First check: if no authUser, it's a general sign-in error
+      if (!authUser) {
+        toast.error('Please sign in first.');
+        return;
+      }
+      
+      // If no piUser, attempt auto-auth
+      await ensurePiAuthenticated();
+      
+      // Now, piUser should exist
+      if (!piUser) {
+        throw new Error('Pi Wallet connection failed. Please try again.');
+      }
+      
+      // ... rest of the code remains the same ...
+      setIsProcessing(true);
+      setPaymentTimedOut(false);
+      setIsConfirming(false);
 
       await createPayment(
         {
@@ -154,25 +184,24 @@ export function PiPayment({
         sessionToken // Pass the session token explicitly
       );
     } catch (error) {
-      console.error("Error initiating payment:", error);
-      toast.error("Could not start payment process.");
+      console.error("Error initiating payment:", error);      toast.error((error as Error).message || "Could not start payment process.");
       setIsProcessing(false);
     }
   };
 
-  // Be less strict: allow payment if user exists, even if SDK is not yet initialized.
-  const isButtonDisabled = disabled || isProcessing || (!isInitialized && !piUser) || !authUser;
+  // Update disabled state: add piLoading, and be less strict (don't block if piUser is null but authUser exists, as we handle it in handlePayment)
+  const isButtonDisabled = disabled || isProcessing || (!isInitialized && !piUser && !authUser) || piLoading;
 
   return (
     <div className="space-y-2">
       <button
         onClick={handlePayment}
-        disabled={isButtonDisabled || paymentTimedOut} // Disable button after timeout
+        disabled={isButtonDisabled || paymentTimedOut}
         className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isProcessing 
           ? (isConfirming ? 'Finalizing...' : 'Processing...') 
-          : children
+          : (piLoading ? 'Connecting...' : children)
         }
       </button>
       {paymentTimedOut && (
