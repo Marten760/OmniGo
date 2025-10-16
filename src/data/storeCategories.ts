@@ -8,8 +8,6 @@ export const storeTypes = {
   services: "🛠️ General Services",
   furniture: "🏠 Furniture and Decor",
   cars: "🚗 Cars and Accessories",
-  other: "🛍️ Other Messages",
-  // Added new store types
   department: "🏬 Department Stores",
   discount: "💸 Discount Stores",
   pet: "🐕 Pet Supplies",
@@ -147,7 +145,6 @@ export const storeCategories: Record<keyof typeof storeTypes, string[]> = {
     "GPS & Navigation",
     "Batteries",
   ],
-  other: ["General", "Miscellaneous"],
   // Added categories for new store types
   department: [
     "Apparel & Accessories",
