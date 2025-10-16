@@ -28,7 +28,7 @@ export function FilterBar({
     { value: "$", label: "Budget-friendly" },
     { value: "$$", label: "Moderate" },
     { value: "$$$", label: "Expensive" },
-    { value: "$$$$", label: "Fine dining" }
+    { value: "$$$$", label: "Very Expensive" }
   ];
   const sortOptions = [
     { value: "", label: "Recommended" },
