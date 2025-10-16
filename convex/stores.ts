@@ -181,11 +181,21 @@ export const getUserStores = query({
       .withIndex("by_owner", (q) => q.eq("ownerId", args.tokenIdentifier!))
       .collect();
 
+    // Get the latest user profile to ensure wallet data is up-to-date
+    const user = await ctx.db.query("users").withIndex("by_tokenIdentifier", q => q.eq("tokenIdentifier", args.tokenIdentifier!)).unique();
+    const profile = user ? await ctx.db.query("userProfiles").withIndex("by_user", q => q.eq("userId", user._id)).unique() : null;
+
     // Get product counts for all stores in a more efficient way
     const storesWithProductCounts = await Promise.all(
       stores.map(async (store) => {
         const products = await ctx.db.query("products").withIndex("by_store", q => q.eq("storeId", store._id)).collect();
-        return { ...store, productCount: products.length };
+        // Override the store's piUid and wallet address with the latest from the user's profile
+        return { 
+          ...store, 
+          productCount: products.length,
+          piUid: profile?.piUid,
+          piWalletAddress: profile?.walletAddress,
+        };
       })
     );
 
