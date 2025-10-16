@@ -163,7 +163,7 @@ export const piSignIn = action({
     walletAddress: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ tokenIdentifier: string; success: boolean; }> => {
-    const useSandbox = process.env.PI_SANDBOX === 'false';
+    const useSandbox = process.env.PI_SANDBOX === 'true';
     const baseUrl = useSandbox ? "https://api.sandbox.minepi.com" : "https://api.minepi.com";
 
     // Call the internal mutation to create/update the user in the database
