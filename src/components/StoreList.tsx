@@ -79,7 +79,7 @@ export function StoreList({
   const hasActiveFilters =
     filters.cuisine.length > 0 ||
     !!filters.storeType ||
-    !!filters.priceRange ||
+    filters.priceRange.length > 0 ||
     filters.hasDelivery !== undefined ||
     !!filters.sortBy;
 

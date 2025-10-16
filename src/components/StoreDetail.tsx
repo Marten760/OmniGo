@@ -483,7 +483,7 @@ export function StoreDetail({ storeId, onBack, onNavigateToChat }: StoreDetailPr
                 {store.categories.length > 0 && <span className="hidden sm:block text-gray-600">•</span>}
                 <span className="text-gray-300">{store.categories.join(', ')}</span>
                 <span className="hidden sm:block text-gray-600">•</span>
-                <span className="text-gray-300">{store.priceRange}</span>
+                <span className="text-gray-300">{Array.isArray(store.priceRange) ? store.priceRange.join(' • ') : store.priceRange}</span>
               </div>
               <p className="text-gray-300 mb-4 text-sm">{store.description}</p>
               {store.hasOffer && store.offerText && <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-3 mb-4"><p className="text-red-300 font-medium text-sm">{store.offerText}</p></div>}

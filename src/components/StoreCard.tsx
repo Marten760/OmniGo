@@ -137,7 +137,7 @@ export function StoreCard({ store, onSelect }: StoreCardProps) {
             {renderStars(store.rating)}
             <span className="text-gray-400 text-xs">({store.totalReviews})</span>
           </div>
-          <p className="text-gray-400 text-sm mt-1 truncate">{store.categories.join(', ')} • {store.priceRange}</p>
+          <p className="text-gray-400 text-sm mt-1 truncate">{store.categories.join(', ')} • {Array.isArray(store.priceRange) ? store.priceRange.join(' • ') : store.priceRange}</p>
         </div>
 
         <div className="flex items-center justify-between text-sm mt-2">
