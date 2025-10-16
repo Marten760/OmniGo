@@ -75,6 +75,8 @@ export function StoreManager({ store, onBack, onLogout, navigate, onNavigateToCh
       : "skip"
   );
 
+  const isWalletLinked = !!authUser?.profile?.walletAddress;
+
   const stats = {
     revenue: dashboardSummary?.todayStats.revenue ?? 0,
     orders: dashboardSummary?.todayStats.orders ?? 0,
@@ -199,7 +201,7 @@ export function StoreManager({ store, onBack, onLogout, navigate, onNavigateToCh
           </div>
         </div>
         <div className="flex items-center space-x-2 sm:space-x-4 justify-end flex-grow">
-          {authUser?.profile?.piUid ? ( // Wallet is linked if piUid exists
+          {isWalletLinked ? (
             <div className="flex items-center gap-2 text-sm text-green-400 bg-green-500/10 px-3 py-2 rounded-2xl border border-green-500/30">
               <CheckCircle className="mr-2 h-4 w-4" />
               <span>Wallet Linked</span>
@@ -207,7 +209,7 @@ export function StoreManager({ store, onBack, onLogout, navigate, onNavigateToCh
           ) : ( // Wallet is not linked
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="border-yellow-500/50 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 hover:text-yellow-300">
+                <Button variant="outline" className="border-yellow-500/50 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 hover:text-yellow-300 animate-pulse hover:animate-none">
                   <AlertTriangle className="h-4 w-4 mr-2" />
                   Link Pi Wallet
                 </Button>
@@ -216,7 +218,11 @@ export function StoreManager({ store, onBack, onLogout, navigate, onNavigateToCh
                 <AlertDialogHeader>
                   <AlertDialogTitle className="flex items-center gap-2 text-xl font-bold text-white"><LinkIcon className="h-6 w-6 text-yellow-400" />Link Your Pi Wallet</AlertDialogTitle>
                   <AlertDialogDescription className="mt-2 text-gray-400 pl-8">
-                    To receive payouts for your sales, you need to link your Pi Wallet to your OmniGo account. This is a one-time action.
+                    {authUser?.profile?.piUid ? (
+                      <>Your Pi account is connected, but to receive payouts for your sales, you need to link your Pi Wallet address. This is a one-time action.</>
+                    ) : (
+                      <>To receive payouts for your sales, you need to link your Pi account and Wallet to your OmniGo account. This is a one-time action.</>
+                    )}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="mt-4 sm:justify-end space-x-2">

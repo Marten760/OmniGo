@@ -314,16 +314,16 @@ export function StoreEditForm({ store }: StoreEditFormProps) {
                 variant="outline"
                 role="combobox"
                 aria-expanded={isCountryPopoverOpen}
-                className="w-full justify-between bg-gray-700 border-gray-600 hover:bg-gray-600 text-white hover:text-white"
+                className="w-full justify-between bg-gray-700 border-gray-600 hover:bg-gray-700 hover:border-purple-500 text-white hover:text-white"
               >
                 {formState.country || "Select country..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-gray-800 border-gray-700 text-white">
-              <Command>
-                <CommandInput placeholder="Search country..." className="h-9 border-gray-700 text-white" />
-                <CommandEmpty>No country found.</CommandEmpty>
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-gray-900 border-gray-700 text-white">
+              <Command className="bg-gray-900 text-white rounded-lg">
+                <CommandInput placeholder=" Search country..." className="h-9 border-gray-700 bg-gray-800 text-white focus:ring-purple-500" />
+                <CommandEmpty className="py-6 text-center text-sm">No country found.</CommandEmpty>
                 <CommandGroup className="max-h-60 overflow-y-auto">
                   {Object.keys(regions).map((country) => (
                     <CommandItem
@@ -335,8 +335,8 @@ export function StoreEditForm({ store }: StoreEditFormProps) {
                         setFormState(prev => ({ ...prev, country: newCountry, region: newRegions ? newRegions[0] : "" }));
                         setIsCountryPopoverOpen(false);
                       }}
-                    >
-                      {country}
+                      className="cursor-pointer hover:bg-purple-500/20">
+                      <span className="truncate">{country}</span>
                       <Check className={`ml-auto h-4 w-4 ${formState.country === country ? "opacity-100" : "opacity-0"}`} />
                     </CommandItem>
                   ))}
@@ -349,17 +349,25 @@ export function StoreEditForm({ store }: StoreEditFormProps) {
           <label className="block text-sm font-medium text-gray-300 mb-2">Region/City *</label>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" className="w-full justify-between bg-gray-700 border-gray-600 hover:bg-gray-600 text-white hover:text-white" disabled={!regions[formState.country as keyof typeof regions]}>
+              <Button variant="outline" role="combobox" className="w-full justify-between bg-gray-700 border-gray-600 hover:bg-gray-700 hover:border-purple-500 text-white hover:text-white" disabled={!regions[formState.country as keyof typeof regions]}>
                 {formState.region || "Select region..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-gray-800 border-gray-700 text-white">
-              <Command>
-                <CommandInput placeholder="Search region..." className="h-9 border-gray-700 text-white" />
-                <CommandEmpty>No region found.</CommandEmpty>
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-gray-900 border-gray-700 text-white">
+              <Command className="bg-gray-900 text-white rounded-lg">
+                <CommandInput placeholder=" Search region..." className="h-9 border-gray-700 bg-gray-800 text-white focus:ring-purple-500" />
+                <CommandEmpty className="py-6 text-center text-sm">No region found.</CommandEmpty>
                 <CommandGroup className="max-h-60 overflow-y-auto">
-                  {(regions[formState.country as keyof typeof regions] || []).map(region => <CommandItem key={region} value={region} onSelect={(currentValue: string) => { setFormState(prev => ({ ...prev, region: currentValue })); }}>{region}<Check className={`ml-auto h-4 w-4 ${formState.region === region ? "opacity-100" : "opacity-0"}`} /></CommandItem>)}
+                  {(regions[formState.country as keyof typeof regions] || []).map(region => (
+                    <CommandItem 
+                      key={region} 
+                      value={region} 
+                      onSelect={(currentValue: string) => { setFormState(prev => ({ ...prev, region: currentValue })); }}
+                      className="cursor-pointer hover:bg-purple-500/20">
+                        <span className="truncate">{region}</span>
+                        <Check className={`ml-auto h-4 w-4 ${formState.region === region ? "opacity-100" : "opacity-0"}`} />
+                    </CommandItem>))}
                 </CommandGroup>
               </Command>
             </PopoverContent>
