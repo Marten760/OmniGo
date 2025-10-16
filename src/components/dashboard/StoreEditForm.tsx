@@ -37,7 +37,7 @@ export function StoreEditForm({ store }: StoreEditFormProps) {
     description: store.description,
     categories: store.categories,
     storeType: store.storeType,
-    priceRange: store.priceRange,
+    priceRange: Array.isArray(store.priceRange) ? store.priceRange : (store.priceRange ? [store.priceRange] : []),
     address: store.address,
     country: store.country,
     region: store.region,
@@ -55,6 +55,10 @@ export function StoreEditForm({ store }: StoreEditFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [isCountryPopoverOpen, setIsCountryPopoverOpen] = useState(false);
+
+  const priceRangeOptions = {
+    "$": "Budget", "$$": "Moderate", "$$$": "Expensive", "$$$$": "Very Expensive"
+  };
 
   // Initialize gallery items from store prop
   useEffect(() => {
@@ -83,6 +87,15 @@ export function StoreEditForm({ store }: StoreEditFormProps) {
       categories: prev.categories.includes(category)
         ? prev.categories.filter(c => c !== category)
         : [...prev.categories, category]
+    }));
+  };
+
+  const handlePriceRangeToggle = (price: string) => {
+    setFormState(prev => ({
+      ...prev,
+      priceRange: prev.priceRange.includes(price)
+        ? prev.priceRange.filter(p => p !== price)
+        : [...prev.priceRange, price]
     }));
   };
 
@@ -378,12 +391,22 @@ export function StoreEditForm({ store }: StoreEditFormProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">Price Range</label>
-          <select name="priceRange" value={formState.priceRange} onChange={handleInputChange} className="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-2 text-white focus:border-purple-500 focus:ring-purple-500">
-            <option value="$">$ - Budget</option>
-            <option value="$$">$$ - Moderate</option>
-            <option value="$$$">$$$ - Expensive</option>
-            <option value="$$$$">$$$$ - Very Expensive</option>
-          </select>
+          <div className="flex flex-wrap gap-2 p-3 bg-gray-900/50 border border-gray-700 rounded-xl">
+            {Object.entries(priceRangeOptions).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => handlePriceRangeToggle(value)}
+                className={`px-3 py-1.5 rounded-full text-sm transition-all duration-200 ${
+                  formState.priceRange.includes(value)
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                {value} - {label}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="flex items-end">
           <div className="flex items-center space-x-3">
