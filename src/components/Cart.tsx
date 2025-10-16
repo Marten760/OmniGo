@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { PiPayment } from './PiPayment';
 import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
 import type { CartItem } from '../context/CartContext'; export type { CartItem };
 import { X, Trash2, ShoppingCart, XCircle, AlertTriangle } from 'lucide-react';
 import { useQuery, useMutation } from 'convex/react';
@@ -9,6 +10,8 @@ import { Id } from '../../convex/_generated/dataModel';
 import { DiscountCodeInput } from './DiscountCodeInput';
 import { formatPiPrice } from '../lib/utils';
 import { useAuth } from '../hooks/useAuth';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { usePi } from '../hooks/usePi';  // Add this to directly access isInitialized/user for logs
 
 // Define a type for the successful discount object from the backend
@@ -45,6 +48,7 @@ export function Cart({
   const [isLoading, setIsLoading] = useState(false);
   const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
   const [showSummaryDetails, setShowSummaryDetails] = useState(true); // State to toggle summary details
+  const [isAddressPopoverOpen, setIsAddressPopoverOpen] = useState(false);
   const { sessionToken, user: authUser } = useAuth();
   const { isInitialized, user: piUser } = usePi();  // Add this for logs
 
@@ -384,21 +388,39 @@ export function Cart({
                                 Delivery Address
                               </label>
                               {addressesData && addressesData.addresses.length > 0 && (
-                                <select
-                                  onChange={(e) => {
-                                    if (e.target.value) {
-                                      setDeliveryAddress(e.target.value);
-                                    }
-                                  }}
-                                  className="text-xs bg-gray-700 border-gray-600 rounded-md px-2 py-1 text-purple-300 focus:ring-purple-500 focus:border-purple-500"
-                                >
-                                  <option value="">Select a saved address</option>
-                                  {addressesData.addresses.map((addr) => (
-                                    <option key={addr._id} value={`${addr.address}, ${addr.city}, ${addr.country}`}>
-                                      {addr.label} - {addr.address.substring(0, 20)}...
-                                    </option>
-                                  ))}
-                                </select>
+                                <Popover open={isAddressPopoverOpen} onOpenChange={setIsAddressPopoverOpen}>
+                                  <PopoverTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      role="combobox"
+                                      className="text-xs bg-gray-700 border-gray-600 rounded-md px-2 py-1 text-purple-300 focus:ring-purple-500 focus:border-purple-500 h-auto"
+                                    >
+                                      Select a saved address
+                                      <ChevronDown className="ml-2 h-3 w-3" />
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-gray-900 border-gray-700 text-white">
+                                    <Command className="bg-gray-900 text-white rounded-lg">
+                                      <CommandInput placeholder=" Search address..." className="h-9 border-gray-700 bg-gray-800 text-white focus:ring-purple-500" />
+                                      <CommandEmpty>No address found.</CommandEmpty>
+                                      <CommandGroup className="max-h-40 overflow-y-auto">
+                                        {addressesData.addresses.map((addr) => (
+                                          <CommandItem
+                                            key={addr._id}
+                                            value={`${addr.label} ${addr.address}`}
+                                            onSelect={() => {
+                                              setDeliveryAddress(`${addr.address}, ${addr.city}, ${addr.country}`);
+                                              setIsAddressPopoverOpen(false);
+                                            }}
+                                            className="cursor-pointer hover:bg-purple-500/20"
+                                          >
+                                            <span className="truncate">{addr.label} - {addr.address}</span>
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    </Command>
+                                  </PopoverContent>
+                                </Popover>
                               )}
                             </div>
                             <input
