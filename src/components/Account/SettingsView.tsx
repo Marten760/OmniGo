@@ -23,28 +23,6 @@ export function SettingsView({ onBack, onLogout }: { onBack: () => void, onLogou
                     <h4 className="text-sm font-semibold text-gray-400 mb-3 px-1">Preferences</h4>
                     <div className="bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden">
                         <div className="divide-y divide-gray-700">
-                            {/* Dark Mode Setting */}
-                            <div className="p-4">
-                                <div className="flex items-center gap-4">
-                                    <Palette className="h-5 w-5 text-purple-400" />
-                                    <div>
-                                        <h5 className="font-medium text-white">Theme</h5>
-                                        <p className="text-sm text-gray-400">Select your preferred app theme.</p>
-                                    </div>
-                                </div>
-                                <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-gray-700 p-1">
-                                    <button onClick={() => setTheme('light')} className={cn("inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50", theme === 'light' ? 'bg-background text-foreground shadow-sm' : 'hover:bg-gray-600')}>
-                                        <Sun className="mr-2 h-4 w-4" /> Light
-                                    </button>
-                                    <button onClick={() => setTheme('dark')} className={cn("inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50", theme === 'dark' ? 'bg-background text-foreground shadow-sm' : 'hover:bg-gray-600')}>
-                                        <Moon className="mr-2 h-4 w-4" /> Dark
-                                    </button>
-                                    <button onClick={() => setTheme('system')} className={cn("inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50", theme === 'system' ? 'bg-background text-foreground shadow-sm' : 'hover:bg-gray-600')}>
-                                        <Laptop className="mr-2 h-4 w-4" /> System
-                                    </button>
-                                </div>
-                            </div>
-
                             {/* Language Setting */}
                             <div className="flex items-center justify-between p-4">
                                 <div className="flex items-center gap-4">
@@ -59,17 +37,6 @@ export function SettingsView({ onBack, onLogout }: { onBack: () => void, onLogou
                                 </button>
                             </div>
 
-                            {/* Notifications Setting */}
-                            <div className="flex items-center justify-between p-4">
-                                <div className="flex items-center gap-4">
-                                    <Bell className="h-5 w-5 text-purple-400" />
-                                    <div>
-                                        <h5 className="font-medium text-white">Push Notifications</h5>
-                                        <p className="text-sm text-gray-400">Order updates and offers.</p>
-                                    </div>
-                                </div>
-                                <Switch onCheckedChange={() => toast.info("Notification settings coming soon!")} />
-                            </div>
                         </div>
                     </div>
                 </div>

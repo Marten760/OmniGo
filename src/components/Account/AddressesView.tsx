@@ -3,17 +3,17 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Edit, Trash2, Home, Briefcase } from "lucide-react";
+import { ArrowLeft, Plus, Edit, Trash2, Home, Briefcase, ChevronsUpDown, Check } from "lucide-react";
 import { worldLocations } from "../../data/worldLocations";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 
 const Card = ({ className, children }: { className?: string; children: React.ReactNode }) => (
     <div className={`bg-gray-800 border border-gray-700 rounded-2xl ${className}`}>{children}</div>
 );
 const CardContent = ({ className, children }: { className?: string, children: React.ReactNode }) => (
     <div className={className}>{children}</div>
-);
-const Button = ({ onClick, className, children, disabled, type }: { onClick?: () => void, className?: string, children: React.ReactNode, disabled?: boolean, type?: "submit" | "button" | "reset" }) => (
-    <button onClick={onClick} className={className} disabled={disabled} type={type}>{children}</button>
 );
 
 function AddressForm({ initialData, onSave, onCancel }: { initialData?: any, onSave: (data: any) => void, onCancel: () => void }) {
@@ -24,20 +24,12 @@ function AddressForm({ initialData, onSave, onCancel }: { initialData?: any, onS
         country: initialData?.country || 'United States',
         postalCode: initialData?.postalCode || '',
     });
+    const [isCountryPopoverOpen, setIsCountryPopoverOpen] = useState(false);
+    const [isRegionPopoverOpen, setIsRegionPopoverOpen] = useState(false);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newCountry = e.target.value;
-        const newRegions = worldLocations[newCountry as keyof typeof worldLocations];
-        setFormData(prev => ({
-            ...prev,
-            country: newCountry,
-            city: newRegions && newRegions.length > 0 ? newRegions[0] : "",
-        }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -66,15 +58,67 @@ function AddressForm({ initialData, onSave, onCancel }: { initialData?: any, onS
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label className="text-sm text-gray-400">Country</label>
-                        <select name="country" required value={formData.country} onChange={handleCountryChange} className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2">
-                            {Object.keys(worldLocations).map(country => <option key={country} value={country}>{country}</option>)}
-                        </select>
+                        <Popover open={isCountryPopoverOpen} onOpenChange={setIsCountryPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={isCountryPopoverOpen}
+                                    className="w-full justify-between bg-gray-700 border-gray-600 hover:bg-gray-700 hover:border-purple-500 text-white hover:text-white mt-1"
+                                >
+                                    {formData.country || "Select country..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-gray-900 border-gray-700 text-white">
+                                <Command className="bg-gray-900 text-white rounded-lg">
+                                    <CommandInput placeholder=" Search country..." className="h-9 border-gray-700 bg-gray-800 text-white focus:ring-purple-500" />
+                                    <CommandEmpty className="py-6 text-center text-sm">No country found.</CommandEmpty>
+                                    <CommandGroup className="max-h-60 overflow-y-auto">
+                                        {Object.keys(worldLocations).map((country) => (
+                                            <CommandItem
+                                                key={country}
+                                                value={country}
+                                                onSelect={(currentValue) => {
+                                                    const newCountry = currentValue === formData.country ? "" : currentValue;
+                                                    const newRegions = worldLocations[newCountry as keyof typeof worldLocations];
+                                                    setFormData(prev => ({ ...prev, country: newCountry, city: newRegions?.[0] || "" }));
+                                                    setIsCountryPopoverOpen(false);
+                                                }}
+                                                className="cursor-pointer hover:bg-purple-500/20"
+                                            >
+                                                <span className="truncate">{country}</span>
+                                                <Check className={`ml-auto h-4 w-4 ${formData.country === country ? "opacity-100" : "opacity-0"}`} />
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                     <div>
                         <label className="text-sm text-gray-400">City</label>
-                        <select name="city" required value={formData.city} onChange={handleInputChange} className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2" disabled={!worldLocations[formData.country as keyof typeof worldLocations]}>
-                            {worldLocations[formData.country as keyof typeof worldLocations]?.map(region => <option key={region} value={region}>{region}</option>)}
-                        </select>
+                        <Popover open={isRegionPopoverOpen} onOpenChange={setIsRegionPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" role="combobox" className="w-full justify-between bg-gray-700 border-gray-600 hover:bg-gray-700 hover:border-purple-500 text-white hover:text-white mt-1" disabled={!worldLocations[formData.country as keyof typeof worldLocations]}>
+                                    {formData.city || "Select region..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-gray-900 border-gray-700 text-white">
+                                <Command className="bg-gray-900 text-white rounded-lg">
+                                    <CommandInput placeholder=" Search region..." className="h-9 border-gray-700 bg-gray-800 text-white focus:ring-purple-500" />
+                                    <CommandEmpty className="py-6 text-center text-sm">No region found.</CommandEmpty>
+                                    <CommandGroup className="max-h-60 overflow-y-auto">
+                                        {(worldLocations[formData.country as keyof typeof worldLocations] || []).map(region => (
+                                            <CommandItem key={region} value={region} onSelect={(currentValue) => { setFormData(prev => ({ ...prev, city: currentValue })); setIsRegionPopoverOpen(false); }} className="cursor-pointer hover:bg-purple-500/20">
+                                                <span className="truncate">{region}</span>
+                                                <Check className={`ml-auto h-4 w-4 ${formData.city === region ? "opacity-100" : "opacity-0"}`} />
+                                            </CommandItem>))}
+                                    </CommandGroup>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                 </div>
                 <div className="flex justify-end gap-4 pt-2">
@@ -174,9 +218,9 @@ export function AddressesView({ onBack }: { onBack: () => void }) {
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Button onClick={() => handleSetDefault(addr._id)} disabled={addr._id === addressesData.defaultAddressId} className="text-xs text-purple-400 hover:text-purple-300 disabled:opacity-50 disabled:cursor-not-allowed">Set as Default</Button>
-                                <Button onClick={() => { setEditingAddress(addr); setIsFormOpen(true); }} className="p-2 text-gray-400 hover:text-white"><Edit size={16} /></Button>
-                                <Button onClick={() => handleDelete(addr._id)} className="p-2 text-gray-400 hover:text-red-500"><Trash2 size={16} /></Button>
+                                <Button onClick={() => handleSetDefault(addr._id)} disabled={addr._id === addressesData.defaultAddressId} variant="link" className="text-xs text-purple-400 hover:text-purple-300 disabled:opacity-50 disabled:cursor-not-allowed h-auto p-0 no-underline hover:no-underline">Set as Default</Button>
+                                <Button onClick={() => { setEditingAddress(addr); setIsFormOpen(true); }} variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white hover:bg-gray-700"><Edit size={16} /></Button>
+                                <Button onClick={() => handleDelete(addr._id)} variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-500/10"><Trash2 size={16} /></Button>
                             </div>
                         </CardContent>
                     </Card>
