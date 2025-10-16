@@ -32,7 +32,6 @@ import { ProfileInformationView } from "./Account/ProfileInformationView";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { AddressesView } from "./Account/AddressesView";
-import { PaymentMethodsView } from "./Account/PaymentMethodsView";
 import { NotificationsView } from "./Account/NotificationsView";
 import { FavoritesView } from "./Account/FavoritesView";
 import { ReviewsView } from "./Account/ReviewsView";
@@ -97,7 +96,6 @@ export function AccountPage({ setCurrentView, setSelectedStore, setSelectedProdu
       { icon: MapPin, title: "Addresses", description: "Manage delivery locations", action: () => setActiveSubView('addresses') },
       { icon: Heart, title: "Favorites", description: "Your saved stores", action: () => setActiveSubView('favorites') },
       { icon: Star, title: "Reviews & Ratings", description: "Your store reviews", action: () => setActiveSubView('reviews') },
-      { icon: CreditCard, title: "Payment Methods", description: "Pi Wallet and other options", action: () => setActiveSubView('paymentMethods') },
       { icon: Receipt, title: "Order History", description: "View past orders", action: () => setCurrentView("orders") },
       { icon: LayoutDashboard, title: "Store Dashboard", description: "Manage your store or create a new one", action: () => setCurrentView('dashboard') },
       { icon: FileText, title: "Privacy Policy", description: "How we handle your data", action: () => setCurrentView("privacy") },
@@ -177,10 +175,6 @@ export function AccountPage({ setCurrentView, setSelectedStore, setSelectedProdu
 
   if (activeSubView === 'addresses') {
     return <AddressesView onBack={() => setActiveSubView('main')} />;
-  }
-
-  if (activeSubView === 'paymentMethods') {
-    return <PaymentMethodsView user={user} onBack={() => setActiveSubView('main')} />;
   }
 
   if (activeSubView === 'notifications') {
