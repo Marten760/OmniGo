@@ -38,7 +38,7 @@ const applicationTables = {
       v.literal("services"),
       v.literal("other"),
     ),
-    priceRange: v.string(), // "$", "$$", "$$$", "$$$$"
+    priceRange: v.array(v.string()), // Changed to array: ["$", "$$"]
     rating: v.number(),
     totalReviews: v.number(),
     logoImageId: v.optional(v.id("_storage")), // Renamed for clarity

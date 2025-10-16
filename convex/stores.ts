@@ -25,7 +25,7 @@ const storeRegistrationArgs = {
     v.literal("services"),
     v.literal("other")
   ),
-  priceRange: v.string(),
+  priceRange: v.array(v.string()),
   address: v.string(),
   country: v.string(),
   region: v.string(),
@@ -111,7 +111,7 @@ export const getStores = query({
     region: v.string(),
     storeType: v.optional(v.string()), // Add storeType to the arguments
     categories: v.optional(v.array(v.string())),
-    priceRange: v.optional(v.string()),
+    priceRange: v.optional(v.array(v.string())), // Changed to array
     hasDelivery: v.optional(v.boolean()),
     sortBy: v.optional(v.string()),
     rating: v.optional(v.number()),
@@ -133,9 +133,6 @@ export const getStores = query({
       // This is a trade-off for simplicity. For large datasets, a search index would be better.
     }
 
-    if (args.priceRange) {
-      query = query.filter((q) => q.eq(q.field("priceRange"), args.priceRange));
-    }
     if (args.hasDelivery !== undefined) {
       query = query.filter((q) => q.eq(q.field("hasDelivery"), args.hasDelivery));
     }
@@ -149,6 +146,13 @@ export const getStores = query({
     if (args.categories && args.categories.length > 0) {
       stores = stores.filter(store =>
         args.categories!.every(cat => store.categories.includes(cat))
+      );
+    }
+
+    // Post-fetch filtering for priceRange (intersection)
+    if (args.priceRange && args.priceRange.length > 0) {
+      stores = stores.filter(store =>
+        args.priceRange!.some(price => store.priceRange.includes(price))
       );
     }
 
@@ -294,7 +298,7 @@ export const updateStore = mutation({
       v.literal("services"),
       v.literal("other")
     )),
-    priceRange: v.optional(v.string()),
+    priceRange: v.optional(v.array(v.string())),
     address: v.optional(v.string()),
     country: v.optional(v.string()),
     region: v.optional(v.string()),
@@ -432,5 +436,32 @@ export const searchStores = query({
       ...store,
       imageUrl: store.logoImageId ? await ctx.storage.getUrl(store.logoImageId) : null,
     })));
+  },
+});
+
+// Migration to convert priceRange from string to array
+export const migratePriceRangeToArray = internalMutation({
+  args: {}, // No arguments needed, it will iterate over all stores
+  handler: async (ctx) => {
+    // Get all stores
+    const allStores = await ctx.db.query("stores").collect();
+
+    // Filter for stores where priceRange is a non-empty string and update them
+    const updates = allStores
+      .filter(store => typeof (store as any).priceRange === 'string' && (store as any).priceRange.trim().length > 0)
+      .map(store => {
+        // Convert the string to a single-element array, trimming whitespace
+        const newPriceRange = [(store as any).priceRange.trim()];
+        return ctx.db.patch(store._id, { priceRange: newPriceRange });
+      });
+
+    if (updates.length > 0) {
+      await Promise.all(updates); // Execute all updates in parallel
+      console.log(`Migration successful: Updated ${updates.length} stores to use an array for priceRange.`);
+      return { success: true, updatedCount: updates.length };
+    }
+
+    console.log("Migration check complete: No stores needed updating.");
+    return { success: true, updatedCount: 0 };
   },
 });

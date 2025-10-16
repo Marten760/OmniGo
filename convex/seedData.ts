@@ -46,7 +46,7 @@ export const seedDatabase = mutation({
         categories: ["Pizza", "Italian"],
         tags: ["Fast Food"],
         storeType: "restaurant",
-        priceRange: "$$",
+        priceRange: ["$$"],
         rating: 4.5,
         totalReviews: 100,
         country: "United States",
