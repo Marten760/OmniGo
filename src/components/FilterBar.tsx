@@ -7,7 +7,7 @@ interface FilterBarProps {
   filters: {
     cuisine: string[]; // Changed to array to support multi-select
     storeType: string | undefined;
-    priceRange: string;
+    priceRange: string[];
     hasDelivery: boolean | undefined;
     sortBy: string;
     rating: number;
@@ -69,7 +69,7 @@ export function FilterBar({
     onFiltersChange({
       cuisine: [],
       storeType: "",
-      priceRange: "",
+      priceRange: [],
       hasDelivery: undefined,
       sortBy: "",
       rating: 0,
@@ -84,10 +84,18 @@ export function FilterBar({
     onFiltersChange({ ...filters, cuisine: newCuisines });
   };
 
+  const handlePriceRangeToggle = (price: string) => {
+    const newPriceRanges = filters.priceRange.includes(price)
+      ? filters.priceRange.filter(p => p !== price)
+      : [...filters.priceRange, price];
+    onFiltersChange({ ...filters, priceRange: newPriceRanges });
+  };
+
+
   const hasActiveFilters =
     filters.cuisine.length > 0 ||
     filters.storeType ||
-    filters.priceRange ||
+    filters.priceRange.length > 0 ||
     filters.hasDelivery !== undefined ||
     filters.sortBy ||
     filters.rating > 0;
@@ -241,12 +249,9 @@ export function FilterBar({
                   {priceRanges.map(range => (
                     <button
                       key={range.value}
-                      onClick={() => onFiltersChange({
-                        ...filters,
-                        priceRange: filters.priceRange === range.value ? "" : range.value
-                      })}
+                      onClick={() => handlePriceRangeToggle(range.value)}
                       className={`p-4 rounded-xl border transition-all duration-200 ${
-                        filters.priceRange === range.value
+                        filters.priceRange.includes(range.value)
                           ? 'border-purple-600 bg-purple-600/20 text-white shadow-lg'
                           : 'border-gray-600 text-gray-300 hover:border-gray-500 hover:bg-gray-800'
                       }`}

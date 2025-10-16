@@ -18,7 +18,7 @@ interface HomePageProps {
   filters: {
     cuisine: string[];
     storeType: string;
-    priceRange: string;
+    priceRange: string[];
     hasDelivery: boolean | undefined;
     sortBy: string;
     rating: number;
