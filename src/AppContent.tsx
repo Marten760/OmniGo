@@ -49,7 +49,7 @@ export function AppContent({
   const [filters, setFilters] = useState({
     cuisine: [] as string[],
     storeType: "",
-    priceRange: "",
+    priceRange: [] as string[],
     hasDelivery: undefined as boolean | undefined,
     sortBy: "",
     rating: 0,
@@ -68,6 +68,16 @@ export function AppContent({
   api.auth.getUserFromToken, 
   sessionToken ? { tokenIdentifier: sessionToken } : "skip"
   );
+
+  // Effect to handle session token invalidation
+  useEffect(() => {
+    // If we have a token but the user query returns null (e.g., token is invalid/expired),
+    // it means the session is broken. We should log the user out.
+    if (sessionToken && user === null) {
+      console.warn("AppContent: Stale session detected. Forcing logout.");
+      onLogout();
+    }
+  }, [sessionToken, user, onLogout]);
 
   console.log('👤 AppContent - user data:', user);
 
@@ -119,8 +129,8 @@ export function AppContent({
   const storesForSeedCheck = useQuery(api.stores.getStores, {
     country: "United States",
     region: "New York",
-    categories: [],
-    priceRange: "",
+    categories: [], // Add missing categories argument
+    priceRange: [], // Add missing priceRange argument
     storeType: "", // Add missing storeType argument
     hasDelivery: undefined,
     sortBy: "",
