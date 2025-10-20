@@ -96,6 +96,17 @@ export const updateUserProfile = mutation({
       favoritesCuisines: args.favoritesCuisines ?? profile?.favoritesCuisines ?? [],
       walletAddress: args.piWalletAddress ?? profile?.walletAddress,
     };
+    
+    // Only update the wallet address if a valid one is provided.
+    if (args.piWalletAddress) {
+      updateData.walletAddress = args.piWalletAddress;
+      console.log('[auth] Wallet address saved in profile:', args.piWalletAddress.slice(0, 8) + '...');
+    } else if (args.piWalletAddress === undefined) {
+      // If the argument is not provided at all, we keep the old one. This is the default behavior.
+    } else {
+      // If an empty string or null is passed, we log a warning and do not update it.
+      console.warn('[auth] Wallet address missing in profile update – ensure auth scopes include it. No changes made to wallet address.');
+    }
 
     if (profile) {
       await ctx.db.patch(profile._id, updateData);
