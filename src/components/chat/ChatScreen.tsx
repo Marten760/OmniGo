@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { ArrowLeft, Send, Paperclip, Loader2, MessageSquareReply, X, Trash2, Pencil, AlertTriangle, Copy } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, Loader2, MessageSquareReply, X, Trash2, Pencil, AlertTriangle, Copy, Image as ImageIcon, Video, FileText } from "lucide-react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { motion, useAnimation } from "framer-motion";
 import { api } from "../../../convex/_generated/api";
@@ -7,6 +7,11 @@ import { useAuth } from "../../hooks/useAuth";
 import { Doc, Id } from "../../../convex/_generated/dataModel";
 import { toast } from "sonner";
 import { formatDistanceToNow } from 'date-fns';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +35,8 @@ export function ChatScreen({ conversationId, onBack }: ChatScreenProps) {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedMessages, setSelectedMessages] = useState<Set<Id<"messages">>>(new Set());
   const [editingMessage, setEditingMessage] = useState<Doc<"messages"> | null>(null);
+  const [imagesToSend, setImagesToSend] = useState<File[]>([]);
+  const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
   const { sessionToken, user } = useAuth();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -51,6 +58,7 @@ export function ChatScreen({ conversationId, onBack }: ChatScreenProps) {
   const updateTypingStatus = useMutation(api.chat.updateTypingStatus);
   const editMessageMutation = useMutation(api.chat.editMessage);
   const deleteMessagesMutation = useMutation(api.chat.deleteMessages);
+  const generateUploadUrl = useMutation(api.stores.generateUploadUrl);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -121,23 +129,48 @@ export function ChatScreen({ conversationId, onBack }: ChatScreenProps) {
   }, [isOtherUserTyping, conversationDetails]);
 
   const handleSend = async () => {
-    if (!input.trim() || !sessionToken) return;
+    if ((!input.trim() && imagesToSend.length === 0) || !sessionToken) return;
     
     const text = input;
     const repliedToMessageId = replyingTo?._id;
 
+    // Optimistically clear inputs
     setInput("");
     setReplyingTo(null); // Reset reply state immediately
     setEditingMessage(null); // Reset editing state
+    const tempImageFiles = imagesToSend;
+    setImagesToSend([]);
+
     try {
       if (editingMessage) {
         await editMessageMutation({ tokenIdentifier: sessionToken, messageId: editingMessage._id, newText: text });
+      } else if (tempImageFiles.length > 0) {
+        // 1. Upload all images in parallel
+        const imageIds = await Promise.all(tempImageFiles.map(async (file) => {
+          const uploadUrl = await generateUploadUrl();
+          const result = await fetch(uploadUrl, {
+            method: "POST",
+            headers: { "Content-Type": file.type },
+            body: file,
+          });
+          const { storageId } = await result.json();
+          return storageId;
+        }));
+        // 2. Send one message with all imageIds
+        await sendMessage({
+          tokenIdentifier: sessionToken,
+          conversationId,
+          text: text || "", // Use caption or empty string
+          imageIds: imageIds,
+          repliedToMessageId,
+        });
       } else {
         await sendMessage({ tokenIdentifier: sessionToken, conversationId, text, repliedToMessageId });
       }
     } catch (error) {
       toast.error("Failed to send message.");
       setInput(text); // Restore input on failure
+      setImagesToSend(tempImageFiles); // Restore images on failure
     }
   };
 
@@ -242,7 +275,7 @@ export function ChatScreen({ conversationId, onBack }: ChatScreenProps) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {messages === undefined && <div className="flex justify-center items-center h-full"><Loader2 className="w-8 h-8 animate-spin text-purple-400" /></div>}
         {messages?.map((msg) => {
           const isSelected = selectedMessages.has(msg._id);
@@ -280,15 +313,15 @@ export function ChatScreen({ conversationId, onBack }: ChatScreenProps) {
             >
               <motion.div
                 drag={!selectionMode ? "x" : false}
-                dragConstraints={{ left: 0, right: 0 }}
+                dragConstraints={{ left: 0, right: 0 }}                
                 onDragEnd={(event, info) => {
                   if (!selectionMode && info.offset.x > 50) { // Swipe right to reply
                     setReplyingTo(msg);
                     controls.start({ x: 0 }); // Reset position after drag
                   }
                 }}
-                animate={controls}
-                className="relative"
+                animate={controls}                
+                className="relative w-full"
               >
                 <div className={`flex items-end gap-2 ${msg.senderId === user?._id ? "flex-row-reverse" : "flex-row"}`}>
                   <div className={`max-w-xs md:max-w-md px-4 py-2.5 rounded-2xl ${
@@ -303,8 +336,21 @@ export function ChatScreen({ conversationId, onBack }: ChatScreenProps) {
                         <p className="text-sm text-gray-200 truncate">{msg.repliedToMessageText}</p>
                       </div>
                     )}
-
-                    <p className={`text-sm break-words ${msg.isDeleted ? 'italic text-gray-400' : ''}`}>{msg.text}</p>
+                    {msg.type === 'image' && (msg as any).imageUrls && ((msg as any).imageUrls.length > 0) && (
+                      <div className={`grid gap-1.5 mt-2 ${ (msg as any).imageUrls.length > 1 ? 'grid-cols-2' : 'grid-cols-1' }`}>
+                        {(msg as any).imageUrls.map((url: string | null, index: number) => (
+                          url && <img
+                            key={index}
+                            src={url}
+                            alt={`Sent image ${index + 1}`}
+                            className="rounded-lg w-full h-auto max-h-[400px] cursor-pointer object-cover"
+                            onClick={() => setZoomedImageUrl(url)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {/* Only show text if it exists and the message is not just an image */}
+                    {(msg.text || msg.type !== 'image') && <p className={`text-sm break-words mt-1 ${msg.isDeleted ? 'italic text-gray-400' : ''}`}>{msg.text}</p>}
                     <span className={`block text-[10px] mt-1 text-right ${
                       msg.senderId === user?._id ? "text-purple-200" : "text-gray-400"
                     }`}>
@@ -325,36 +371,96 @@ export function ChatScreen({ conversationId, onBack }: ChatScreenProps) {
       </div>
 
       {/* Input */}
-      {(replyingTo || editingMessage) && (
+      {(replyingTo || editingMessage || imagesToSend.length > 0) && (
         <div className="p-3 bg-gray-800/70 border-t border-gray-700 flex items-center justify-between animate-fade-in-sm">
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-purple-400 font-semibold">
-              {editingMessage ? "Editing message" : `Replying to ${replyingTo?.senderId === user?._id ? "yourself" : conversationDetails?.otherUserName}`}
-            </p>
-            <p className="text-sm text-gray-300 truncate">{editingMessage?.text || replyingTo?.text}</p>
-          </div>
-          <button onClick={() => { setReplyingTo(null); setEditingMessage(null); setInput(""); }} className="p-2 text-gray-400 hover:text-white">
+          {imagesToSend.length > 0 ? (
+            <div className="flex-1 min-w-0 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+              {imagesToSend.map((file, index) => (
+                <div key={index} className="relative flex-shrink-0">
+                  <img src={URL.createObjectURL(file)} alt="Preview" className="h-14 w-14 object-cover rounded-lg" />
+                  <button onClick={() => setImagesToSend(prev => prev.filter((_, i) => i !== index))} className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full p-0.5">
+                    <X size={10} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-purple-400 font-semibold">
+                {editingMessage ? "Editing message" : `Replying to ${replyingTo?.senderId === user?._id ? "yourself" : conversationDetails?.otherUserName}`}
+              </p>
+              <p className="text-sm text-gray-300 truncate">{editingMessage?.text || replyingTo?.text}</p>
+            </div>
+          )}
+          <button onClick={() => { setReplyingTo(null); setEditingMessage(null); setInput(""); setImagesToSend([]); }} className="p-2 text-gray-400 hover:text-white flex-shrink-0 ml-2">
             <X size={16} />
           </button>
         </div>
       )}
       <div className="flex items-end p-3 bg-gray-800 border-t border-gray-700 gap-2">
-        <button onClick={() => toast.info("Attachments coming soon!")} className="p-2 text-gray-400 hover:text-white">
-          <Paperclip size={20} />
-        </button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="p-2 text-gray-400 hover:text-white">
+              <Paperclip size={20} />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 bg-gray-800 border-gray-700 text-white p-2 mb-2" side="top" align="start">
+            <div className="space-y-1">
+              <label htmlFor="image-upload" className="flex items-center gap-3 w-full p-2 rounded-md hover:bg-purple-500/20 cursor-pointer">
+                <ImageIcon size={18} className="text-purple-400" />
+                <span>Image</span>
+              </label>
+              <input id="image-upload" type="file" accept="image/*" multiple className="hidden" onChange={(e) => setImagesToSend(prev => [...prev, ...Array.from(e.target.files || [])])} />
+              
+              <button onClick={() => toast.info("Video attachments coming soon!")} className="flex items-center gap-3 w-full p-2 rounded-md hover:bg-purple-500/20">
+                <Video size={18} className="text-purple-400" />
+                <span>Video</span>
+              </button>
+              <button onClick={() => toast.info("File attachments coming soon!")} className="flex items-center gap-3 w-full p-2 rounded-md hover:bg-purple-500/20">
+                <FileText size={18} className="text-purple-400" />
+                <span>File</span>
+              </button>
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <textarea
           ref={textareaRef}
-          placeholder="Type a message..."
+          placeholder={imagesToSend.length > 0 ? "Add a caption..." : "Type a message..."}
           className="flex-1 bg-gray-700 border-gray-600 rounded-2xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 text-white resize-none max-h-32"
           value={input}
           onChange={handleInputChange}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
           rows={1}
         />
-        <button onClick={handleSend} className="bg-purple-600 text-white p-3 rounded-full hover:bg-purple-700 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed self-end" disabled={!input.trim()}>
+        <button onClick={handleSend} className="bg-purple-600 text-white p-3 rounded-full hover:bg-purple-700 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed self-end" disabled={!input.trim() && imagesToSend.length === 0}>
           <Send size={18} />
         </button>
       </div>
+
+      {/* Zoomed Image Modal */}
+      {zoomedImageUrl && (
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in" 
+          onClick={() => setZoomedImageUrl(null)}
+        >
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <img 
+              src={zoomedImageUrl} 
+              alt="Zoomed chat image" 
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            />
+            <button onClick={() => setZoomedImageUrl(null)} className="absolute -top-3 -right-3 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors">
+              <X size={24} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
