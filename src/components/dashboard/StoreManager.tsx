@@ -285,8 +285,8 @@ export function StoreManager({ store, onBack, onLogout, navigate, onNavigateToCh
         />
         <StatCard
           title="Inventory"
-          value={`${stats.inventory}%`}
-          description="Stock level"
+          value={`${stats.inventory}`}
+          description="Active products"
           icon={<TrendingUp className="h-4 w-4 text-orange-400" />}
           gradient="from-orange-500/20 to-black/10"
         />
