@@ -378,6 +378,7 @@ const applicationTablesWithDiscounts = {
     conversationId: v.id("conversations"),
     senderId: v.id("users"),
     text: v.string(),
+    imageIds: v.optional(v.array(v.id("_storage"))),
     type: v.union(v.literal("text"), v.literal("image"), v.literal("voice")),
     status: v.union(v.literal("sent"), v.literal("delivered"), v.literal("read")),
     isDeleted: v.boolean(),

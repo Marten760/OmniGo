@@ -247,13 +247,25 @@ export const getMessages = query({
       throw new Error("Conversation not found or access denied.");
     }
 
-    // تحسين: استخدم index الجديد للترتيب الزمني
-    return ctx.db
+    const messages = await ctx.db
       .query("messages")
       .withIndex("by_conversation_created", (q) => q.eq("conversationId", args.conversationId))
       .filter((q) => q.eq(q.field("isDeleted"), false))
       .order("asc") // إصلاح: direction فقط؛ يرتب حسب createdAt بفضل الـ index
       .collect();
+
+    // Add image URLs to messages that have images
+    return Promise.all(
+      messages.map(async (message) => {
+        if (message.type === "image" && message.imageIds && message.imageIds.length > 0) {
+          const imageUrls = await Promise.all(
+            message.imageIds.map((id) => ctx.storage.getUrl(id))
+          );
+          return { ...message, imageUrls };
+        }
+        return message;
+      })
+    );
   },
 });
 
@@ -263,7 +275,8 @@ export const sendMessage = mutation({
     tokenIdentifier: v.string(),
     conversationId: v.id("conversations"),
     text: v.string(),
-    repliedToMessageId: v.optional(v.id("messages")),
+    imageIds: v.optional(v.array(v.id("_storage"))),
+    repliedToMessageId: v.optional(v.id("messages")),    
   },
   handler: async (ctx, args) => {
     const sender = await validateToken(ctx, args.tokenIdentifier);
@@ -301,7 +314,8 @@ export const sendMessage = mutation({
       conversationId: args.conversationId,
       senderId: sender._id,
       text: args.text,
-      type: "text",
+      type: args.imageIds && args.imageIds.length > 0 ? "image" : "text",
+      imageIds: args.imageIds,
       status: "sent",
       isDeleted: false,
       createdAt: Date.now(), // إضافة جديدة
