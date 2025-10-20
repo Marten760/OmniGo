@@ -146,11 +146,6 @@ export const usePi = () => {
 
     console.log('[Pi Auth] Starting direct authentication with scopes:', scopes);
 
-    if (user) {
-      console.log('[Pi Auth] User already authenticated:', user.uid);
-      return user;
-    }
-
     try {
       const authResult = await window.Pi.authenticate(scopes, onIncompletePaymentFound); // Pass the callback here
 
@@ -160,21 +155,24 @@ export const usePi = () => {
         throw new Error('Invalid Pi User ID from SDK. Please ensure your Pi account is fully verified and try again.');
       }
 
-      const piUser: PiUser = {
+      const updatedUser: PiUser = {
         uid: authResult.user.uid,
         username: authResult.user.username,
-        walletAddress: authResult.user.walletAddress,
+        walletAddress: authResult.user.walletAddress || user?.walletAddress, // Keep old address if new one is null
       };
 
-      console.log('[Pi Auth] Obtained walletAddress:', piUser.walletAddress ? `${piUser.walletAddress.slice(0, 8)}...` : 'null/undefined');
-      if (!piUser.walletAddress) {
+      console.log('[Pi Auth] Obtained walletAddress:', updatedUser.walletAddress ? `${updatedUser.walletAddress.slice(0, 8)}...` : 'null/undefined');
+      if (!updatedUser.walletAddress) {
         console.warn('[Pi Auth] Wallet address not available. Ensure KYC and wallet activation in Pi App.');
         toast.warning('Wallet address not detected. Complete KYC and activate your Pi Wallet for full features.');
       }
 
-      setUser(piUser);
-      localStorage.setItem('piUser', JSON.stringify(piUser));
-      return piUser;
+      setUser(updatedUser);
+      localStorage.setItem('piUser', JSON.stringify(updatedUser)); // Save immediately to localStorage
+      console.log('[usePi] Auth success, wallet:', updatedUser.walletAddress ? 'saved' : 'still missing');
+
+      // The original authResult is returned, but the internal state is updated.
+      return authResult.user;
     } catch (error: any) {
       console.error('Pi authentication failed:', error);
       setAuthError(error.message || 'Authentication failed');
