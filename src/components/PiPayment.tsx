@@ -67,7 +67,7 @@ export function PiPayment({
   useEffect(() => { 
     if (!isInitialized && piUser) {  // If user exists but init failed
       console.error('[PiPayment] Pi SDK not initialized, but user exists. Check Pi Browser/Mainnet setup.');
-      toast.warning('Pi SDK issue detected. Reloading...');
+      
       // اختياري: إعادة تحميل الصفحة إذا لزم
     }
     if (!piUser) {
@@ -79,21 +79,24 @@ export function PiPayment({
   }, [isInitialized, piUser, authUser]);
 
   // دالة مساعدة للـ re-auth تلقائي لـ Pi إذا كان authUser موجود لكن piUser لا
-  const ensurePiAuthenticated = async () => {
+  const ensurePiAuthenticated = async () => { 
     if (!authUser) {
       throw new Error('Please sign in first.');
     }
-    if (!piUser && isInitialized && !piLoading) {
+    // If not authenticated with Pi at all, do a full auth request.
+    if (!piUser && isInitialized && !piLoading) { 
       console.log('[PiPayment] Auto-authenticating Pi user...');
       toast.info('Connecting Pi Wallet...');
       try {
-        await authenticate(['username', 'payments']); // scopes أساسية للدفع
+        // Request all necessary scopes at once to avoid multiple popups.
+        await authenticate(['username', 'payments']);
         console.log('[PiPayment] Pi auto-auth success.');
       } catch (error) {
         console.error('[PiPayment] Pi auto-auth failed:', error);
         throw error;
       }
     }
+    
   };
 
   const handlePayment = async () => { 

@@ -39,19 +39,21 @@ export function PromotionsCarousel({ onStoreSelect, filters, country, region }: 
         {promotions.map((promo) => (
           <div
             key={promo._id}
-            onClick={() => onStoreSelect(promo.targetStoreId)}            className="relative w-64 sm:w-80 h-36 sm:h-48 flex-shrink-0 rounded-2xl overflow-hidden cursor-pointer group"
+            onClick={() => onStoreSelect(promo.targetStoreId)}
+            className="w-80 sm:w-96 flex-shrink-0 bg-gray-800 rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 hover:shadow-xl hover:shadow-purple-900/20 hover:scale-[1.02]"
           >
-            <img src={promo.imageUrl!} alt={promo.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-            <div className="absolute bottom-0 left-0 p-4 text-white">
-              <h3 className="font-bold text-lg">{promo.title}</h3>
-              {promo.description && <p className="text-sm text-gray-300">{promo.description}</p>}
+            <div className="relative">
+              <img src={promo.imageUrl!} alt={promo.title} className="w-full h-48 sm:h-56 object-cover transition-transform duration-300 group-hover:scale-105" />
+              {promo.badgeText && (
+                <div className="absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                  {promo.badgeText}
+                </div>
+              )}
             </div>
-            {promo.badgeText && (
-              <div className="absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                {promo.badgeText}
-              </div>
-            )}
+            <div className="p-4">
+              <h3 className="font-bold text-lg text-white truncate">{promo.title}</h3>
+              {promo.description && <p className="text-sm text-gray-400 mt-1 truncate">{promo.description}</p>}
+            </div>
           </div>
         ))}
       </div>
